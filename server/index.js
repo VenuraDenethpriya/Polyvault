@@ -16,7 +16,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY)
   );
 const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY),
   app = express();
-app.use(cors(), express.json());
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }), express.json());
+
 const ok = async (p) => {
   const { data, error } = await p;
   if (error) throw new Error(error.message);
