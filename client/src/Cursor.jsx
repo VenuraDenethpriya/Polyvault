@@ -1,42 +1,62 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+// Custom cursor. Activates as soon as a real mouse moves (works on touchscreen
+// laptops and after leaving devtools device mode) and hides again on touch.
 export default function Cursor() {
-  const dot = useRef(), ring = useRef();
+  const dot = useRef(),
+    ring = useRef();
   useEffect(() => {
-    // only on devices with a real mouse (skip touch screens)
-    if (!window.matchMedia("(hover:hover) and (pointer:fine)").matches) return;
-    document.body.classList.add("has-cursor");
+    const el = [dot.current, ring.current];
     const dx = gsap.quickTo(dot.current, "x", { duration: 0.1, ease: "power3" });
     const dy = gsap.quickTo(dot.current, "y", { duration: 0.1, ease: "power3" });
     const rx = gsap.quickTo(ring.current, "x", { duration: 0.45, ease: "power3" });
     const ry = gsap.quickTo(ring.current, "y", { duration: 0.45, ease: "power3" });
-    const el = [dot.current, ring.current];
+
+    const showAll = () => {
+      document.body.classList.add("has-cursor");
+      el.forEach((n) => n.classList.add("vis"));
+    };
+    const hideAll = () => {
+      document.body.classList.remove("has-cursor");
+      el.forEach((n) => n.classList.remove("vis"));
+    };
 
     const move = (e) => {
-      el.forEach((n) => n.classList.add("show"));
-      dx(e.clientX); dy(e.clientY); rx(e.clientX); ry(e.clientY);
+      if (e.pointerType && e.pointerType !== "mouse") return;
+      showAll();
+      dx(e.clientX);
+      dy(e.clientY);
+      rx(e.clientX);
+      ry(e.clientY);
     };
     const over = (e) => {
       const t = e.target;
-      ring.current.classList.toggle("hover", !!t.closest("a,button,summary,select,input,.dd li,.tilt"));
+      if (!(t instanceof Element)) return;
+      ring.current.classList.toggle(
+        "hover",
+        !!t.closest("a,button,summary,select,input,.dd li,.tilt"),
+      );
       ring.current.classList.toggle("drag", !!t.closest(".viewer,.stage"));
     };
-    const down = () => ring.current.classList.add("down");
+    const down = (e) => {
+      if (e.pointerType !== "mouse") return hideAll();
+      ring.current.classList.add("down");
+    };
     const up = () => ring.current.classList.remove("down");
-    const leave = () => el.forEach((n) => n.classList.remove("show"));
+    const leave = () => el.forEach((n) => n.classList.remove("vis"));
 
-    window.addEventListener("mousemove", move);
+    window.addEventListener("pointermove", move);
     window.addEventListener("mouseover", over);
-    window.addEventListener("mousedown", down);
-    window.addEventListener("mouseup", up);
+    window.addEventListener("pointerdown", down);
+    window.addEventListener("pointerup", up);
     document.documentElement.addEventListener("mouseleave", leave);
     return () => {
-      document.body.classList.remove("has-cursor");
-      window.removeEventListener("mousemove", move);
+      hideAll();
+      window.removeEventListener("pointermove", move);
       window.removeEventListener("mouseover", over);
-      window.removeEventListener("mousedown", down);
-      window.removeEventListener("mouseup", up);
+      window.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointerup", up);
       document.documentElement.removeEventListener("mouseleave", leave);
     };
   }, []);

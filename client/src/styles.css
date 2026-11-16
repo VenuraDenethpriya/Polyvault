@@ -1314,8 +1314,8 @@ body.has-cursor * {
   opacity: 0;
   transition: opacity 0.25s;
 }
-.cur-dot.show,
-.cur-ring.show {
+.cur-dot.vis,
+.cur-ring.vis {
   opacity: 1;
 }
 .cur-dot {
