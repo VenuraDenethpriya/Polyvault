@@ -2,15 +2,20 @@
     "name": "polyvault-server",
     "type": "module",
     "scripts": {
-        "start": "node --env-file=.env index.js",
+        "start": "node index.js",
         "start:local": "node index.local.js",
         "dev": "nodemon --exec \"node --env-file=.env index.js\"",
-        "dev:local": "nodemon index.local.js"
+        "dev:local": "nodemon --exec \"node index.local.js\""
     },
     "nodemonConfig": {
-        "watch": ["."],
+        "watch": [
+            "."
+        ],
         "ext": "js,json",
-        "ignore": ["node_modules/", "db.json"]
+        "ignore": [
+            "node_modules/",
+            "db.json"
+        ]
     },
     "dependencies": {
         "@supabase/supabase-js": "^2.45.4",
