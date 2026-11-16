@@ -4,7 +4,7 @@ import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import Card from "../Card.jsx";
 export default function Account() {
-  const { user, favs } = useAuth(),
+  const { user, favs, owned } = useAuth(),
     [all, setAll] = useState([]);
   useEffect(() => {
     api("/assets").then(setAll);
@@ -13,7 +13,8 @@ export default function Account() {
       user.plan === "paid" || user.role === "admin"
         ? "High · 4096px"
         : "Medium · 1024px",
-    mine = all.filter((a) => favs.includes(a.id));
+    mine = all.filter((a) => favs.includes(a.id)),
+    bought = all.filter((a) => owned.includes(a.id));
   return (
     <div className="wrap page">
       <div className="profile">
@@ -33,6 +34,21 @@ export default function Account() {
           </Link>
         )}
       </div>
+      <h2 className="sec">Purchased ({bought.length})</h2>
+      {bought.length ? (
+        <div className="grid">
+          {bought.map((a, i) => (
+            <Card key={a.id} a={a} i={i} />
+          ))}
+        </div>
+      ) : (
+        <div className="empty">
+          Assets you buy appear here, with full quality unlocked.{" "}
+          <Link to="/browse" style={{ color: "#b9a8ff" }}>
+            Browse assets
+          </Link>
+        </div>
+      )}
       <h2 className="sec">Favourites ({mine.length})</h2>
       {mine.length ? (
         <div className="grid">

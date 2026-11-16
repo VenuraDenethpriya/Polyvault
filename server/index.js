@@ -276,6 +276,86 @@ app.patch(
   }),
 );
 
+// ---------- Purchases (demo checkout: no real charge) ----------
+
+// Does this user own (have bought) this asset?
+const owns = async (u, assetId) => {
+  if (!u) return false;
+  try {
+    return !!(await ok(
+      sb
+        .from("purchases")
+        .select("id")
+        .eq("user_id", u.id)
+        .eq("asset_id", assetId)
+        .maybeSingle(),
+    ));
+  } catch (e) {
+    // e.g. purchases table not created yet: don't break downloads
+    console.warn("purchases lookup failed:", e.message);
+    return false;
+  }
+};
+
+// Friendlier error when the purchases table hasn't been created yet
+const noTable = (e) =>
+  /purchases/.test(e.message) && /schema cache|does not exist/.test(e.message);
+const SETUP_MSG =
+  "Purchases are not set up yet: run the purchases SQL from server/supabase.sql in Supabase";
+
+// API route to list the authenticated user's purchases
+app.get(
+  "/api/purchases",
+  need(),
+  h(async (req, res) =>
+    res.json(
+      await ok(
+        sb
+          .from("purchases")
+          .select("*")
+          .eq("user_id", req.user.id)
+          .order("created_at", { ascending: false }),
+      ),
+    ),
+  ),
+);
+
+// API route to buy a single asset. The price always comes from the database,
+// never from the client. Only the card brand + last 4 digits are sent/stored.
+app.post(
+  "/api/assets/:id/buy",
+  need(),
+  h(async (req, res) => {
+    const a = await one(req.params.id);
+    if (!a) return res.status(404).json({ error: "Not found" });
+    const { last4 = "", brand = "card" } = req.body || {};
+    if (!/^\d{4}$/.test(last4))
+      return res.status(400).json({ error: "Invalid payment details" });
+    if (await owns(req.user, a.id))
+      return res.status(409).json({ error: "You already own this asset" });
+    try {
+      res.json(
+        await ok(
+          sb
+            .from("purchases")
+            .insert({
+              user_id: req.user.id,
+              asset_id: a.id,
+              price: a.price,
+              card_brand: String(brand).slice(0, 20),
+              card_last4: last4,
+            })
+            .select()
+            .single(),
+        ),
+      );
+    } catch (e) {
+      if (noTable(e)) return res.status(503).json({ error: SETUP_MSG });
+      throw e;
+    }
+  }),
+);
+
 // Quality and size mappings for asset downloads
 const RANK = { low: 0, medium: 1, high: 2 },
   SIZE = { low: 256, medium: 1024, high: 4096 };
@@ -288,12 +368,14 @@ app.get(
       q = req.query.quality || "low";
     if (!a || !(q in RANK))
       return res.status(400).json({ error: "Bad request" });
-    if (RANK[q] > RANK[tierOf(req.user)])
+    // buying an asset unlocks full quality for that asset
+    const tier = (await owns(req.user, a.id)) ? "high" : tierOf(req.user);
+    if (RANK[q] > RANK[tier])
       return res.status(403).json({
         error:
           q === "medium"
             ? "Log in to download medium quality"
-            : "Upgrade to a paid plan for high quality",
+            : "Buy this asset or upgrade to Pro for high quality",
       });
     await ok(
       sb

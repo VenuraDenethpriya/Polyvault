@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, download } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { Viewer } from "../Scene.jsx";
 import Card from "../Card.jsx";
+import Checkout from "../Checkout.jsx";
 import { meta, SIZES, isImg, imgSrc } from "../meta.js";
 const SW = ["#7c5cff", "#00d4ff", "#ff4fd8", "#ffb84d", "#3ddc97", "#ffffff"];
 export default function Asset() {
   const { id } = useParams(),
-    { user, favs, toggleFav } = useAuth(),
+    { user, favs, toggleFav, owned } = useAuth(),
+    nav = useNavigate(),
+    [checkout, setCheckout] = useState(false),
     [a, setA] = useState(),
     [rel, setRel] = useState([]),
     [color, setColor] = useState(),
@@ -34,7 +37,9 @@ export default function Asset() {
       </div>
     );
   const m = meta(a),
-    tier = !user ? 0 : user.plan === "paid" || user.role === "admin" ? 2 : 1,
+    pro = !!user && (user.plan === "paid" || user.role === "admin"),
+    mine = owned.includes(a.id),
+    tier = !user ? 0 : pro || mine ? 2 : 1,
     on = favs.includes(a.id);
   const go = async (q) => {
     try {
@@ -205,8 +210,29 @@ export default function Asset() {
           </div>
           <div className="price">
             ${a.price}
-            <small> value · free to download</small>
+            <small> one-time · lower quality is free</small>
           </div>
+          {mine ? (
+            <div className="owned">✓ You own this asset · full quality unlocked</div>
+          ) : pro ? (
+            <div className="owned">★ Included with your Pro plan</div>
+          ) : (
+            <>
+              <button
+                className="btn big wide"
+                onClick={() =>
+                  user ? setCheckout(true) : nav("/login", { state: { back: "/asset/" + a.id } })
+                }
+              >
+                Buy now · ${a.price}
+              </button>
+              <p className="hint">
+                {user
+                  ? "One-time purchase. Unlocks 4096px + commercial licence for this asset."
+                  : "Log in to buy this asset."}
+              </p>
+            </>
+          )}
           {["low", "medium", "high"].map((q, i) => (
             <button
               key={q}
@@ -216,7 +242,9 @@ export default function Asset() {
               <span>{i > tier ? "🔒" : "⬇"}</span>
               <b>{q[0].toUpperCase() + q.slice(1)} quality</b>
               <em>{SIZES[q]}px</em>
-              <small>{i > tier ? (i === 1 ? "Log in" : "Pro") : "Ready"}</small>
+              <small>
+                {i > tier ? (i === 1 ? "Log in" : "Buy or go Pro") : "Ready"}
+              </small>
             </button>
           ))}
           <p className="msg">{msg}</p>
@@ -238,6 +266,15 @@ export default function Asset() {
           </div>
         </aside>
       </div>
+      {checkout && (
+        <Checkout
+          a={a}
+          onClose={(q) => {
+            setCheckout(false);
+            if (q) go(q);
+          }}
+        />
+      )}
       {rel.length > 0 && (
         <>
           <h2 className="sec">More in {a.category}</h2>

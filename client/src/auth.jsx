@@ -25,6 +25,19 @@ export function Provider({ children }) {
   useEffect(() => {
     localStorage.favs = JSON.stringify(favs);
   }, [favs]);
+  // ids of assets the user has bought
+  const [owned, setOwned] = useState([]);
+  useEffect(() => {
+    if (!user) return setOwned([]);
+    api("/purchases")
+      .then((r) => setOwned(r.map((p) => p.asset_id)))
+      .catch(() => setOwned([]));
+  }, [user?.id]);
+  const buy = async (id, card) => {
+    const p = await api(`/assets/${id}/buy`, { method: "POST", body: card });
+    setOwned((o) => [...new Set([...o, p.asset_id])]);
+    return p;
+  };
   const login = async (path, body) => {
     const d = await api(path, { method: "POST", body });
     localStorage.t = d.token;
@@ -38,7 +51,17 @@ export function Provider({ children }) {
     setFavs((f) => (f.includes(id) ? f.filter((x) => x !== id) : [...f, id]));
   return (
     <Ctx.Provider
-      value={{ user, setUser, ready, login, logout, favs, toggleFav }}
+      value={{
+        user,
+        setUser,
+        ready,
+        login,
+        logout,
+        favs,
+        toggleFav,
+        owned,
+        buy,
+      }}
     >
       {children}
     </Ctx.Provider>

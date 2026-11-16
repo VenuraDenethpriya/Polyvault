@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth.jsx";
 import { Viewer } from "../Scene.jsx";
 const DEMO = [
@@ -11,6 +11,7 @@ const DEMO = [
 export default function Auth({ mode }) {
   const { login } = useAuth(),
     nav = useNavigate(),
+    back = useLocation().state?.back || "/",
     [f, setF] = useState({}),
     [err, setErr] = useState(""),
     [showPw, setShowPw] = useState(false),
@@ -20,7 +21,7 @@ export default function Auth({ mode }) {
     e.preventDefault();
     try {
       await login(reg ? "/auth/register" : "/auth/login", f);
-      nav("/");
+      nav(back);
     } catch (x) {
       setErr(x.message);
     }
@@ -98,7 +99,7 @@ export default function Auth({ mode }) {
         )}
         <p>
           {reg ? "Already a member?" : "New here?"}{" "}
-          <Link to={reg ? "/login" : "/register"}>
+          <Link to={reg ? "/login" : "/register"} state={{ back }}>
             {reg ? "Log in" : "Create account"}
           </Link>
         </p>

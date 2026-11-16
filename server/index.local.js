@@ -40,8 +40,11 @@ let db = fs.existsSync(F)
         downloads: x[5],
       })),
     };
+db.purchases ||= [];
 const save = () => fs.writeFileSync(F, JSON.stringify(db, null, 1));
 save();
+const owns = (u, assetId) =>
+  !!u && db.purchases.some((p) => p.user_id === u.id && p.asset_id == assetId);
 const pub = ({ hash, ...u }) => u,
   tierOf = (u) =>
     !u ? "low" : u.plan === "paid" || u.role === "admin" ? "high" : "medium";
@@ -150,21 +153,45 @@ app.patch("/api/admin/users/:id", need("admin"), (req, res) => {
   save();
   res.json(pub(u));
 });
+// ---------- Purchases (demo checkout: no real charge) ----------
+app.get("/api/purchases", need(), (req, res) =>
+  res.json(db.purchases.filter((p) => p.user_id === req.user.id).reverse()),
+);
+app.post("/api/assets/:id/buy", need(), (req, res) => {
+  const a = db.assets.find((x) => x.id == req.params.id);
+  if (!a) return res.status(404).json({ error: "Not found" });
+  const { last4 = "", brand = "card" } = req.body || {};
+  if (!/^\d{4}$/.test(last4))
+    return res.status(400).json({ error: "Invalid payment details" });
+  if (owns(req.user, a.id))
+    return res.status(409).json({ error: "You already own this asset" });
+  const p = {
+    id: Date.now(),
+    user_id: req.user.id,
+    asset_id: a.id,
+    price: a.price,
+    card_brand: String(brand).slice(0, 20),
+    card_last4: last4,
+    created_at: new Date().toISOString(),
+  };
+  db.purchases.push(p);
+  save();
+  res.json(p);
+});
 const RANK = { low: 0, medium: 1, high: 2 },
   SIZE = { low: 256, medium: 1024, high: 4096 };
 app.get("/api/assets/:id/download", (req, res) => {
   const a = db.assets.find((x) => x.id == req.params.id),
     q = req.query.quality || "low";
   if (!a || !(q in RANK)) return res.status(400).json({ error: "Bad request" });
-  if (RANK[q] > RANK[tierOf(req.user)])
-    return res
-      .status(403)
-      .json({
-        error:
-          q === "medium"
-            ? "Log in to download medium quality"
-            : "Upgrade to a paid plan for high quality",
-      });
+  const tier = owns(req.user, a.id) ? "high" : tierOf(req.user);
+  if (RANK[q] > RANK[tier])
+    return res.status(403).json({
+      error:
+        q === "medium"
+          ? "Log in to download medium quality"
+          : "Buy this asset or upgrade to Pro for high quality",
+    });
   a.downloads++;
   save();
   const s = SIZE[q];

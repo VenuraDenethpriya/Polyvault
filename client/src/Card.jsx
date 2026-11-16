@@ -15,7 +15,7 @@ export const Thumb = ({ a }) =>
     </div>
   );
 export default function Card({ a, i = 0 }) {
-  const { favs, toggleFav } = useAuth(),
+  const { favs, toggleFav, owned } = useAuth(),
     r = useRef(),
     m = meta(a),
     on = favs.includes(a.id);
@@ -51,7 +51,11 @@ export default function Card({ a, i = 0 }) {
           <div className="meta">
             <span>★ {m.rating}</span>
             <span>by {m.author}</span>
-            <b>${a.price}</b>
+            {owned.includes(a.id) ? (
+              <b className="own">✓ Owned</b>
+            ) : (
+              <b>${a.price}</b>
+            )}
           </div>
         </Link>
       </div>
