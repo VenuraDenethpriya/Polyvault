@@ -106,10 +106,10 @@ export default function Dashboard() {
         <tbody>
           {mine.map((a) => (
             <tr key={a.id}>
-              <td>{a.title}</td>
-              <td>{a.category}</td>
-              <td>{a.downloads}</td>
-              <td>
+              <td data-label="Title">{a.title}</td>
+              <td data-label="Category">{a.category}</td>
+              <td data-label="Downloads">{a.downloads}</td>
+              <td className="act">
                 <button
                   onClick={() =>
                     api("/assets/" + a.id, { method: "DELETE" }).then(load)
@@ -137,9 +137,9 @@ export default function Dashboard() {
             <tbody>
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td>{u.name}</td>
-                  <td>{u.email}</td>
-                  <td>
+                  <td data-label="Name">{u.name}</td>
+                  <td data-label="Email">{u.email}</td>
+                  <td data-label="Role">
                     <Select
                       className="boxed"
                       showAll={false}
@@ -148,7 +148,7 @@ export default function Dashboard() {
                       options={["user", "developer", "admin"]}
                     />
                   </td>
-                  <td>
+                  <td data-label="Plan">
                     <Select
                       className="boxed"
                       showAll={false}

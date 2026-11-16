@@ -14,15 +14,55 @@ import ScrollRail from "./ScrollRail.jsx";
 
 function Nav() {
   const { user, logout, favs } = useAuth(),
-    [s, setS] = useState(false);
+    [s, setS] = useState(false),
+    [open, setOpen] = useState(false),
+    { pathname, search } = useLocation();
   useEffect(() => {
     const f = () => setS(window.scrollY > 20);
     f();
     window.addEventListener("scroll", f);
     return () => window.removeEventListener("scroll", f);
   }, []);
+  // close the mobile menu whenever the route changes
+  useEffect(() => setOpen(false), [pathname, search]);
+  useEffect(() => {
+    document.body.classList.toggle("menu-open", open);
+  }, [open]);
+  const staff = user && ["admin", "developer"].includes(user.role);
   return (
-    <nav className={s ? "s" : ""}>
+    <nav className={(s ? "s" : "") + (open ? " open" : "")}>
+      <div className="mnav">
+        <Link to="/browse">Browse all</Link>
+        {CATS.map((c) => (
+          <Link key={c[0]} to={"/browse?category=" + encodeURIComponent(c[0])}>
+            {c[0]}
+          </Link>
+        ))}
+        <Link to="/pricing">Pricing</Link>
+        <hr />
+        {user ? (
+          <>
+            <Link to="/account">My account · ♥ {favs.length}</Link>
+            {staff && <Link to="/dashboard">Dashboard</Link>}
+            <span className="tag">
+              {user.role}
+              {user.plan === "paid" ? " · pro" : ""}
+            </span>
+            <button className="btn ghost wide" onClick={logout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="btn ghost wide">
+              Log in
+            </Link>
+            <Link to="/register" className="btn wide">
+              Sign up free
+            </Link>
+          </>
+        )}
+      </div>
       <div className="wrap in">
         <Link className="logo" to="/">
           <i />
@@ -46,7 +86,7 @@ function Nav() {
             <Link to="/account" className="fav">
               ♥ {favs.length}
             </Link>
-            {["admin", "developer"].includes(user.role) && (
+            {staff && (
               <Link to="/dashboard" className="links">
                 Dashboard
               </Link>
@@ -54,11 +94,11 @@ function Nav() {
             <Link to="/account" className="avatar sm">
               {user.name[0]}
             </Link>
-            <span className="tag">
+            <span className="tag dsk">
               {user.role}
               {user.plan === "paid" ? " · pro" : ""}
             </span>
-            <button className="ghost" onClick={logout}>
+            <button className="ghost dsk" onClick={logout}>
               Logout
             </button>
           </>
@@ -67,11 +107,21 @@ function Nav() {
             <Link to="/login" className="links">
               Log in
             </Link>
-            <Link to="/register" className="btn">
+            <Link to="/register" className="btn dsk">
               Sign up free
             </Link>
           </>
         )}
+        <button
+          className={"burger" + (open ? " on" : "")}
+          aria-label="Menu"
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </div>
     </nav>
   );

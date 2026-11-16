@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
 
+// Environment variables
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_KEY,
@@ -15,17 +16,28 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY)
   throw new Error(
     "Copy .env.example to .env and set SUPABASE_URL + SUPABASE_SERVICE_KEY",
   );
-const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY),
-  app = express();
-app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }), express.json());
 
+// Supabase client
+const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY),
+app = express();
+
+app.use(
+  cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }),
+  express.json(),
+);
+
+// Helper functions
 const ok = async (p) => {
   const { data, error } = await p;
   if (error) throw new Error(error.message);
   return data;
 };
+
+// Returns a public user object without the password hash
 const h = (f) => (q, s, n) =>
   f(q, s, n).catch((e) => s.status(500).json({ error: e.message }));
+
+// Seed the database with default users and assets if empty
 if (!(await ok(sb.from("users").select("id").limit(1))).length)
   await ok(
     sb.from("users").insert(
@@ -43,26 +55,28 @@ if (!(await ok(sb.from("users").select("id").limit(1))).length)
       })),
     ),
   );
+
+// Seed demo assets when the assets table is empty
 if (!(await ok(sb.from("assets").select("id").limit(1))).length) {
   const owner = (
     await ok(sb.from("users").select("id").eq("role", "developer").limit(1))
   )[0]?.id; // seed demo assets when table is empty
   await ok(
-    sb
-      .from("assets")
-      .insert(
-        ASSETS.map(([title, category, shape, color, price, downloads]) => ({
-          title,
-          category,
-          shape,
-          color,
-          price,
-          downloads,
-          owner,
-        })),
-      ),
+    sb.from("assets").insert(
+      ASSETS.map(([title, category, shape, color, price, downloads]) => ({
+        title,
+        category,
+        shape,
+        color,
+        price,
+        downloads,
+        owner,
+      })),
+    ),
   );
 }
+
+// Helper functions
 const pub = ({ hash, ...u }) => u,
   tierOf = (u) =>
     !u ? "low" : u.plan === "paid" || u.role === "admin" ? "high" : "medium";
@@ -70,6 +84,8 @@ const sign = (u) => ({
   token: jwt.sign({ id: u.id }, SECRET, { expiresIn: "7d" }),
   user: pub(u),
 });
+
+// Middleware to authenticate users based on JWT token
 app.use(
   h(async (req, _, next) => {
     try {
@@ -86,6 +102,8 @@ app.use(
     next();
   }),
 );
+
+// Middleware to enforce authentication and role-based access control
 const need =
   (...r) =>
   (req, res, next) =>
@@ -94,8 +112,13 @@ const need =
       : r.length && !r.includes(req.user.role)
         ? res.status(403).json({ error: "Forbidden" })
         : next();
+
+
+// Helper function to fetch a single asset by ID
 const one = (id) =>
   ok(sb.from("assets").select("*").eq("id", id).maybeSingle());
+
+// API routes
 app.post(
   "/api/auth/register",
   h(async (req, res) => {
@@ -121,6 +144,8 @@ app.post(
     );
   }),
 );
+
+// API route for user login
 app.post(
   "/api/auth/login",
   h(async (req, res) => {
@@ -136,7 +161,11 @@ app.post(
     res.json(sign(u));
   }),
 );
+
+// API route to get the authenticated user's information
 app.get("/api/me", need(), (req, res) => res.json(pub(req.user)));
+
+// API route to upgrade the authenticated user's plan to "paid"
 app.post(
   "/api/upgrade",
   need(),
@@ -155,6 +184,8 @@ app.post(
     ),
   ),
 ); // mock payment
+
+// API route to fetch assets with optional search and category filters
 app.get(
   "/api/assets",
   h(async (req, res) => {
@@ -165,6 +196,8 @@ app.get(
     res.json(await ok(s));
   }),
 );
+
+// API route to fetch a single asset by ID
 app.get(
   "/api/assets/:id",
   h(async (req, res) => {
@@ -172,6 +205,8 @@ app.get(
     a ? res.json(a) : res.status(404).json({ error: "Not found" });
   }),
 );
+
+// API route to create a new asset (requires "developer" or "admin" role)
 app.post(
   "/api/assets",
   need("developer", "admin"),
@@ -198,6 +233,8 @@ app.post(
     );
   }),
 );
+
+// API route to delete an asset by ID (requires "developer" or "admin" role)
 app.delete(
   "/api/assets/:id",
   need("developer", "admin"),
@@ -210,6 +247,8 @@ app.delete(
     res.json({ ok: true });
   }),
 );
+
+// API route to fetch all users (requires "admin" role)
 app.get(
   "/api/admin/users",
   need("admin"),
@@ -217,6 +256,8 @@ app.get(
     res.json((await ok(sb.from("users").select("*").order("id"))).map(pub)),
   ),
 );
+
+// API route to update a user's role or plan (requires "admin" role)
 app.patch(
   "/api/admin/users/:id",
   need("admin"),
@@ -234,8 +275,12 @@ app.patch(
     );
   }),
 );
+
+// Quality and size mappings for asset downloads
 const RANK = { low: 0, medium: 1, high: 2 },
   SIZE = { low: 256, medium: 1024, high: 4096 };
+
+// API route to download an asset in a specified quality
 app.get(
   "/api/assets/:id/download",
   h(async (req, res) => {
@@ -244,14 +289,12 @@ app.get(
     if (!a || !(q in RANK))
       return res.status(400).json({ error: "Bad request" });
     if (RANK[q] > RANK[tierOf(req.user)])
-      return res
-        .status(403)
-        .json({
-          error:
-            q === "medium"
-              ? "Log in to download medium quality"
-              : "Upgrade to a paid plan for high quality",
-        });
+      return res.status(403).json({
+        error:
+          q === "medium"
+            ? "Log in to download medium quality"
+            : "Upgrade to a paid plan for high quality",
+      });
     await ok(
       sb
         .from("assets")
@@ -267,4 +310,6 @@ app.get(
       );
   }),
 );
+
+// Start the server and listen on port 5001
 app.listen(5001, () => console.log("API on :5001 (Supabase)"));
