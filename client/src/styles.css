@@ -1063,6 +1063,34 @@ footer a:hover {
 .authp a {
   color: #b9a8ff;
 }
+/* password field with show/hide toggle */
+.pw {
+  position: relative;
+  display: flex;
+}
+.pw input {
+  flex: 1;
+  padding-right: 48px;
+}
+.pw button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  color: var(--mut);
+  transition: 0.2s;
+}
+.pw button:hover {
+  color: #fff;
+  background: #7c5cff22;
+}
 .kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
