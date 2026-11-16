@@ -56,7 +56,18 @@ export default function Dashboard() {
           ))}
         </select>
         <select onChange={set("shape")}>
-          {["sphere", "box", "torus", "knot", "cone"].map((c) => (
+          {[
+            "sphere",
+            "box",
+            "torus",
+            "knot",
+            "cone",
+            "cylinder",
+            "pyramid",
+            "diamond",
+            "capsule",
+            "helix",
+          ].map((c) => (
             <option key={c}>{c}</option>
           ))}
         </select>

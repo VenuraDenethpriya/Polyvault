@@ -4,7 +4,7 @@ import { api, download } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { Viewer } from "../Scene.jsx";
 import Card from "../Card.jsx";
-import { meta, SIZES } from "../meta.js";
+import { meta, SIZES, isImg, imgSrc } from "../meta.js";
 const SW = ["#7c5cff", "#00d4ff", "#ff4fd8", "#ffb84d", "#3ddc97", "#ffffff"];
 export default function Asset() {
   const { id } = useParams(),
@@ -14,7 +14,9 @@ export default function Asset() {
     [color, setColor] = useState(),
     [spin, setSpin] = useState(true),
     [msg, setMsg] = useState(""),
-    [tab, setTab] = useState("desc");
+    [tab, setTab] = useState("desc"),
+    [hue, setHue] = useState(0),
+    [zoom, setZoom] = useState(1);
   useEffect(() => {
     setMsg("");
     api("/assets/" + id).then((x) => {
@@ -54,29 +56,76 @@ export default function Asset() {
       </div>
       <div className="detail">
         <div>
-          <div className="viewer">
-            <Viewer type={a.shape} color={color} spin={spin} />
-            <div className="tools">
-              <span>Colour</span>
-              {SW.map((c) => (
-                <i
-                  key={c}
-                  style={{ background: c }}
-                  className={color === c ? "on" : ""}
-                  onClick={() => setColor(c)}
-                />
-              ))}
-              <input
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
+          {isImg(a) ? (
+            <div className="viewer imgv">
+              <img
+                src={imgSrc(a)}
+                alt={a.title}
+                style={{
+                  filter: `hue-rotate(${hue}deg)`,
+                  transform: `scale(${zoom})`,
+                }}
               />
-              <button onClick={() => setSpin(!spin)}>
-                {spin ? "⏸ Pause" : "▶ Spin"}
-              </button>
+              <div className="tools">
+                <span>Zoom</span>
+                <button
+                  onClick={() =>
+                    setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))
+                  }
+                >
+                  −
+                </button>
+                <button
+                  onClick={() =>
+                    setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))
+                  }
+                >
+                  ＋
+                </button>
+                <span>Hue</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="360"
+                  value={hue}
+                  onChange={(e) => setHue(+e.target.value)}
+                />
+                <button
+                  onClick={() => {
+                    setHue(0);
+                    setZoom(1);
+                  }}
+                >
+                  Reset
+                </button>
+              </div>
+              <small>Preview only · downloads are the original</small>
             </div>
-            <small>Drag to rotate · scroll to zoom</small>
-          </div>
+          ) : (
+            <div className="viewer">
+              <Viewer type={a.shape} color={color} spin={spin} />
+              <div className="tools">
+                <span>Colour</span>
+                {SW.map((c) => (
+                  <i
+                    key={c}
+                    style={{ background: c }}
+                    className={color === c ? "on" : ""}
+                    onClick={() => setColor(c)}
+                  />
+                ))}
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                />
+                <button onClick={() => setSpin(!spin)}>
+                  {spin ? "⏸ Pause" : "▶ Spin"}
+                </button>
+              </div>
+              <small>Drag to rotate · scroll to zoom</small>
+            </div>
+          )}
           <div className="tabs">
             {[
               ["desc", "Description"],
@@ -108,9 +157,16 @@ export default function Asset() {
             <table className="tabc">
               <tbody>
                 {[
-                  ["Format", "GLB (glTF 2.0) + SVG preview"],
-                  ["Polygons", m.polys + " tris"],
-                  ["Materials", "PBR metal / roughness"],
+                  ...(isImg(a)
+                    ? [
+                        ["Format", "SVG vector (scales to any size)"],
+                        ["Aspect ratio", "3:2 landscape"],
+                      ]
+                    : [
+                        ["Format", "GLB (glTF 2.0) + SVG preview"],
+                        ["Polygons", m.polys + " tris"],
+                        ["Materials", "PBR metal / roughness"],
+                      ]),
                   ["Category", a.category],
                   ["Licence", "Standard (Pro: commercial)"],
                 ].map(([k, v]) => (

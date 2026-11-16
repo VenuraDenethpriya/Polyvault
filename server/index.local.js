@@ -1,3 +1,4 @@
+import { stockSvg, VALID } from "./stock.js";
 import { ASSETS } from "./seed.js";
 import express from "express";
 import cors from "cors";
@@ -112,6 +113,8 @@ app.get("/api/assets/:id", (req, res) => {
 app.post("/api/assets", need("developer", "admin"), (req, res) => {
   const { title, category, shape, color, price } = req.body;
   if (!title) return res.status(400).json({ error: "Title required" });
+  if (!VALID.test(shape || "sphere"))
+    return res.status(400).json({ error: "Invalid shape" });
   const a = {
     id: Date.now(),
     title,
@@ -168,7 +171,8 @@ app.get("/api/assets/:id/download", (req, res) => {
   res
     .type("image/svg+xml")
     .send(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${a.color}"/></radialGradient></defs><rect width="100" height="100" fill="#0b0b14"/><circle cx="50" cy="50" r="30" fill="url(#g)"/><text x="50" y="92" fill="#fff" font-size="5" text-anchor="middle">${a.title} · ${q} · ${s}px</text></svg>`,
+      stockSvg(a, s) ||
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${a.color}"/></radialGradient></defs><rect width="100" height="100" fill="#0b0b14"/><circle cx="50" cy="50" r="30" fill="url(#g)"/><text x="50" y="92" fill="#fff" font-size="5" text-anchor="middle">${a.title} · ${q} · ${s}px</text></svg>`,
     );
 });
 app.listen(5001, () => console.log("API on :5001"));

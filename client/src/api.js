@@ -1,6 +1,8 @@
+const API_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+
 export const api = async (p, o = {}) => {
   const t = localStorage.t;
-  const r = await fetch("/api" + p, {
+  const r = await fetch(API_URL + p, {
     ...o,
     headers: {
       "Content-Type": "application/json",
@@ -14,7 +16,7 @@ export const api = async (p, o = {}) => {
 };
 export const download = async (a, q) => {
   const t = localStorage.t;
-  const r = await fetch(`/api/assets/${a.id}/download?quality=${q}`, {
+  const r = await fetch(`${API_URL}/assets/${a.id}/download?quality=${q}`, {
     headers: t ? { Authorization: "Bearer " + t } : {},
   });
   if (!r.ok) throw new Error((await r.json()).error);

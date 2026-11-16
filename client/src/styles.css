@@ -1422,3 +1422,77 @@ body.has-cursor * {
     display: none;
   }
 }
+
+/* ---- new shapes + image stock ---- */
+.shape.cylinder {
+  width: 62px;
+  height: 104px;
+  border-radius: 50%/12%;
+  background: linear-gradient(
+    90deg,
+    #0009,
+    var(--c) 35%,
+    #fff9 50%,
+    var(--c) 65%,
+    #0009
+  );
+}
+.shape.pyramid {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  background: linear-gradient(
+    105deg,
+    #fffa,
+    var(--c) 50%,
+    #000a 51%,
+    color-mix(in srgb, var(--c) 60%, #000)
+  );
+  box-shadow: none;
+}
+.shape.diamond {
+  clip-path: polygon(50% 0, 100% 38%, 50% 100%, 0 38%);
+  background: conic-gradient(from 20deg, #fff, var(--c), #0008, var(--c), #fff);
+  box-shadow: none;
+}
+.shape.capsule {
+  width: 56px;
+  height: 112px;
+  border-radius: 99px;
+}
+.shape.helix {
+  border-radius: 50%;
+  background: repeating-linear-gradient(60deg, var(--c) 0 9px, #0006 9px 16px);
+  -webkit-mask: radial-gradient(circle, #000 62%, transparent 64%);
+  mask: radial-gradient(circle, #000 62%, transparent 64%);
+  box-shadow: none;
+}
+.thumb.img {
+  place-items: stretch;
+}
+.thumb.img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s;
+}
+.tilt:hover .thumb.img img {
+  transform: scale(1.08);
+}
+.imgv {
+  display: grid;
+  place-items: center;
+  padding: 20px 20px 80px;
+}
+.imgv img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  transition:
+    transform 0.3s,
+    filter 0.3s;
+  box-shadow: 0 20px 60px #0008;
+}
+.tools input[type="range"] {
+  padding: 0;
+  width: 120px;
+  accent-color: #7c5cff;
+}

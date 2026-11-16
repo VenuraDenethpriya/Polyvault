@@ -1,21 +1,62 @@
-// [title, category, shape, color, price, downloads]
-export const ASSETS = [
-  ["Neon Orb", "3D Models", "sphere", "#7c5cff", 19, 1240],
-  ["Cube Kit", "3D Models", "box", "#00d4ff", 12, 860],
-  ["Cone Set", "3D Models", "cone", "#3ddc97", 8, 430],
-  ["Glass Sphere", "Textures", "sphere", "#e8e8ff", 22, 1520],
-  ["Metal Torus", "Textures", "torus", "#c0c0d0", 18, 970],
-  ["Liquid Gold", "Textures", "torus", "#ffb84d", 20, 1105],
-  ["Ring Pack", "Icons", "torus", "#ff5c8a", 9, 2010],
-  ["Cube Icons", "Icons", "box", "#5c8aff", 7, 1720],
-  ["Pixel Cones", "Icons", "cone", "#ff8a5c", 6, 640],
-  ["Knot Logo", "Graphics", "knot", "#ffb84d", 15, 1330],
-  ["Cyber Knot", "Graphics", "knot", "#ff3df5", 25, 1890],
-  ["Chrome Knot", "Graphics", "knot", "#9fb3c8", 17, 760],
-  ["Device Orb", "Mockups", "sphere", "#3ddc97", 14, 520],
-  ["Box Mockup", "Mockups", "box", "#ffd166", 11, 880],
-  ["Cone Stand", "Mockups", "cone", "#06d6a0", 10, 390],
-  ["Pulse Sphere", "Animations", "sphere", "#ff3df5", 21, 1410],
-  ["Spin Ring", "Animations", "torus", "#00f5d4", 16, 990],
-  ["Twist Knot", "Animations", "knot", "#f15bb5", 24, 1630],
+// [title, category, shape, color, price, downloads] – 40 generated 3D variations + 40 stock images (see seed-stock.js)
+import { STOCK } from "./seed-stock.js";
+const SH = [
+    "sphere",
+    "box",
+    "torus",
+    "knot",
+    "cone",
+    "cylinder",
+    "pyramid",
+    "diamond",
+    "capsule",
+    "helix",
+  ],
+  BASE = [
+    "Orb",
+    "Cube",
+    "Ring",
+    "Knot",
+    "Cone",
+    "Cylinder",
+    "Pyramid",
+    "Gem",
+    "Capsule",
+    "Spiral",
+  ];
+const ADJ = [
+  ["Neon", "#7c5cff"],
+  ["Chrome", "#9fb3c8"],
+  ["Candy", "#ff4fd8"],
+  ["Frost", "#00d4ff"],
+  ["Solar", "#ffb84d"],
+  ["Mint", "#3ddc97"],
+  ["Ruby", "#ff5c5c"],
+  ["Pearl", "#e8e8ff"],
 ];
+const CAT = [
+  "3D Models",
+  "Textures",
+  "Icons",
+  "Graphics",
+  "Mockups",
+  "Animations",
+];
+const M = SH.flatMap((s, si) =>
+  [0, 1, 2, 3].map((k) => {
+    const [a, c] = ADJ[(si + k * 2) % 8];
+    return [
+      `${a} ${BASE[si]}`,
+      CAT[(si + k) % 6],
+      s,
+      c,
+      6 + ((si * 7 + k * 5) % 20),
+      300 + ((si * 131 + k * 277) % 1700),
+    ];
+  }),
+);
+export const ASSETS = [];
+for (let i = 0; i < Math.max(M.length, STOCK.length); i++) {
+  if (M[i]) ASSETS.push(M[i]);
+  if (STOCK[i]) ASSETS.push(STOCK[i]);
+}

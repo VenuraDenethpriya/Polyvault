@@ -1,14 +1,19 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./auth.jsx";
-import { meta } from "./meta.js";
-export const Thumb = ({ a }) => (
-  <div className="thumb" style={{ "--c": a.color }}>
-    <i className="fl">
-      <b className={"shape " + a.shape} />
-    </i>
-  </div>
-);
+import { meta, isImg, imgSrc } from "./meta.js";
+export const Thumb = ({ a }) =>
+  isImg(a) ? (
+    <div className="thumb img">
+      <img loading="lazy" src={imgSrc(a)} alt={a.title} />
+    </div>
+  ) : (
+    <div className="thumb" style={{ "--c": a.color }}>
+      <i className="fl">
+        <b className={"shape " + a.shape} />
+      </i>
+    </div>
+  );
 export default function Card({ a, i = 0 }) {
   const { favs, toggleFav } = useAuth(),
     r = useRef(),

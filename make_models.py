@@ -122,3 +122,81 @@ def face(ax, sg):
 
 
 write('box', *merge(*[face(ax, sg) for ax in range(3) for sg in (1, -1)]))
+# ---- extra shapes: cylinder, pyramid, diamond, capsule, helix ----
+
+
+def flat(faces):
+    V = []
+    I = []
+    for a, b, c in faces:
+        u = [b[k]-a[k] for k in range(3)]
+        v = [c[k]-a[k] for k in range(3)]
+        n = [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]]
+        cen = [(a[k]+b[k]+c[k])/3 for k in range(3)]
+        if sum(n[k]*cen[k] for k in range(3)) < 0:
+            b, c = c, b
+        i = len(V)
+        V += [a, b, c]
+        I += [i, i+1, i+2]
+    return V, I
+
+
+write('cylinder', *merge(grid(lambda a, b: (.8*cos(2*pi*a), -1+2*b, .8*sin(2*pi*a)), lambda a, b: (0, -1+2*b, 0), 48, 1, True, False),
+                         grid(lambda a, b: (.8*b*cos(2*pi*a), 1, .8*b*sin(2*pi*a)), O, 48, 1, True, False), grid(lambda a, b: (.8*b*cos(2*pi*a), -1, .8*b*sin(2*pi*a)), O, 48, 1, True, False)))
+B4 = [(-.9, -1, -.9), (.9, -1, -.9), (.9, -1, .9), (-.9, -1, .9)]
+AP = (0, 1, 0)
+write('pyramid', *flat([(B4[i], B4[(i+1) % 4], AP)
+      for i in range(4)]+[(B4[0], B4[1], B4[2]), (B4[0], B4[2], B4[3])]))
+
+
+def ring(y, r): return [(r*cos(2*pi*i/8), y, r*sin(2*pi*i/8))
+                        for i in range(8)]
+
+
+T, Gd = ring(.6, .55), ring(.15, 1)
+F = []
+for i in range(8):
+    j = (i+1) % 8
+    F += [((0, .6, 0), T[i], T[j]), (T[i], Gd[i], Gd[j]),
+          (T[i], Gd[j], T[j]), (Gd[i], (0, -1, 0), Gd[j])]
+write('diamond', *flat(F))
+
+
+def cap(a, b):
+    ph = pi*b
+    return (.7*sin(ph)*cos(2*pi*a), (.6 if b <= .5 else -.6)+.7*cos(ph), .7*sin(ph)*sin(2*pi*a))
+
+
+write('capsule', *grid(cap, lambda a,
+      b: (0, .6 if b <= .5 else -.6, 0), 32, 24, True, False))
+
+
+def tube(P, r):
+    def f(a, b):
+        h = 1e-3
+        p = P(a)
+        q = P(a+h)
+        m = P(a-h)
+        T = [q[k]-m[k] for k in range(3)]
+        l = math.sqrt(sum(x*x for x in T))
+        T = [x/l for x in T]
+        dd = [q[k]-2*p[k]+m[k] for k in range(3)]
+        dt = sum(dd[k]*T[k] for k in range(3))
+        N = [dd[k]-dt*T[k] for k in range(3)]
+        l = math.sqrt(sum(x*x for x in N)) or 1
+        N = [x/l for x in N]
+        Bv = [T[1]*N[2]-T[2]*N[1], T[2]*N[0]-T[0]*N[2], T[0]*N[1]-T[1]*N[0]]
+        v = 2*pi*b
+        return tuple(p[k]+r*(cos(v)*N[k]+sin(v)*Bv[k]) for k in range(3))
+    return f
+
+
+def HX(a): return (.6*cos(6*pi*a), -1.1+2.2*a, .6*sin(6*pi*a))
+
+
+def ball(c, r): return grid(lambda a, b: (c[0]+r*sin(pi*b)*cos(2*pi*a), c[1]+r*cos(
+    pi*b), c[2]+r*sin(pi*b)*sin(2*pi*a)), lambda a, b: c, 16, 8, True, False)
+
+
+write('helix', *merge(grid(tube(HX, .14), lambda a, b: HX(a),
+      150, 12, False, True), ball(HX(0), .14), ball(HX(1), .14)))

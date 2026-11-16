@@ -8,6 +8,7 @@ export default function Browse() {
     [all, setAll] = useState([]),
     [sort, setSort] = useState("popular"),
     [max, setMax] = useState(30),
+    [kind, setKind] = useState(""),
     q = sp.get("q") || "",
     cat = sp.get("category") || "";
   useEffect(() => {
@@ -21,7 +22,11 @@ export default function Browse() {
     setSp(n);
   };
   const items = all
-    .filter((a) => a.price <= max)
+    .filter(
+      (a) =>
+        a.price <= max &&
+        (!kind || (kind === "img") === a.shape.startsWith("img:")),
+    )
     .sort((a, b) =>
       sort === "popular"
         ? b.downloads - a.downloads
@@ -48,6 +53,20 @@ export default function Browse() {
             onClick={() => set("category", c[0])}
           >
             {c[0]}
+          </button>
+        ))}
+        <h4>Type</h4>
+        {[
+          ["", "All types"],
+          ["3d", "3D models"],
+          ["img", "Images"],
+        ].map(([k, l]) => (
+          <button
+            key={k}
+            className={kind === k ? "on" : ""}
+            onClick={() => setKind(k)}
+          >
+            {l}
           </button>
         ))}
         <h4>Max price: ${max}</h4>
