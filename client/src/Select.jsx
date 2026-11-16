@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
-export default function Select({ value, onChange, options, placeholder = "All" }) {
+// options: strings, or [value, label] pairs. Set showAll={false} to hide the empty "All" option.
+export default function Select({
+  value,
+  onChange,
+  options,
+  placeholder = "All",
+  showAll = true,
+  className = "",
+}) {
+  const opts = [...(showAll ? [["", placeholder]] : []), ...options.map((o) =>
+    Array.isArray(o) ? o : [o, o],
+  )];
+  const current = opts.find(([v]) => v === value);
   const [open, setOpen] = useState(false);
   const r = useRef();
   useEffect(() => {
@@ -9,23 +21,23 @@ export default function Select({ value, onChange, options, placeholder = "All" }
     return () => document.removeEventListener("mousedown", f);
   }, []);
   return (
-    <div className="dd" ref={r}>
+    <div className={"dd " + className} ref={r}>
       <button type="button" onClick={() => setOpen(!open)}>
-        {value || placeholder}
+        {current ? current[1] : placeholder}
         <i>▾</i>
       </button>
       {open && (
         <ul>
-          {["", ...options].map((o) => (
+          {opts.map(([v, label]) => (
             <li
-              key={o}
-              className={o === value ? "on" : ""}
+              key={v}
+              className={v === value ? "on" : ""}
               onClick={() => {
-                onChange(o);
+                onChange(v);
                 setOpen(false);
               }}
             >
-              {o || placeholder}
+              {label}
             </li>
           ))}
         </ul>

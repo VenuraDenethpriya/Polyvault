@@ -72,6 +72,7 @@ function Model({ type, color, spin }) {
     </Float>
   );
 }
+
 export function Hero() {
   const ref = useRef(),
     [on, setOn] = useState(true); // pause rendering when scrolled out of view

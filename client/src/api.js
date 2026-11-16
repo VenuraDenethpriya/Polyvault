@@ -14,6 +14,7 @@ export const api = async (p, o = {}) => {
   if (!r.ok) throw new Error(d.error || "Error");
   return d;
 };
+
 export const download = async (a, q) => {
   const t = localStorage.t;
   const r = await fetch(`${API_URL}/assets/${a.id}/download?quality=${q}`, {

@@ -5,6 +5,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { createClient } from "@supabase/supabase-js";
+
 const {
   SUPABASE_URL,
   SUPABASE_SERVICE_KEY,

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { api } from "./api.js";
+
 const Ctx = createContext();
 export const useAuth = () => useContext(Ctx);
 export function Provider({ children }) {

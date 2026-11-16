@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 import Card from "../Card.jsx";
+import Select from "../Select.jsx";
 import { CATS } from "../meta.js";
 export default function Browse() {
   const [sp, setSp] = useSearchParams(),
@@ -85,12 +86,18 @@ export default function Browse() {
             defaultValue={q}
             onKeyDown={(e) => e.key === "Enter" && set("q", e.target.value)}
           />
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="popular">Most popular</option>
-            <option value="new">Newest</option>
-            <option value="low">Price: low to high</option>
-            <option value="high">Price: high to low</option>
-          </select>
+          <Select
+            className="boxed"
+            value={sort}
+            onChange={setSort}
+            showAll={false}
+            options={[
+              ["popular", "Most popular"],
+              ["new", "Newest"],
+              ["low", "Price: low to high"],
+              ["high", "Price: high to low"],
+            ]}
+          />
         </div>
         <p>
           {items.length} results{cat && ` in ${cat}`}
