@@ -1089,10 +1089,13 @@ footer a:hover {
 }
 .tbl {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: var(--panel);
   border-radius: 16px;
-  overflow: hidden;
+}
+.tbl tr:last-child td {
+  border-bottom: 0;
 }
 .tbl th,
 .tbl td {
@@ -1272,6 +1275,27 @@ select option:hover {
 .dd.boxed ul {
   left: auto;
   right: 0;
+}
+/* compact dropdowns inside tables; undo the .tbl button (Delete) style */
+.tbl .dd.boxed {
+  display: inline-block;
+}
+.tbl .dd.boxed > button {
+  min-width: 130px;
+  padding: 7px 12px;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  color: #eee;
+  text-transform: capitalize;
+}
+.tbl .dd li {
+  text-transform: capitalize;
+}
+.tbl .dd ul {
+  left: 0;
+  right: auto;
+  min-width: 160px;
 }
 
 /* ---------- custom cursor ---------- */

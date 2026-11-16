@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { CATS } from "../meta.js";
+import Select from "../Select.jsx";
 export default function Dashboard() {
   const { user } = useAuth(),
     [items, setItems] = useState([]),
@@ -50,13 +51,19 @@ export default function Dashboard() {
       <h2 className="sec">Upload asset</h2>
       <div className="panel row">
         <input placeholder="Title" onChange={set("title")} />
-        <select onChange={set("category")}>
-          {CATS.map((c) => (
-            <option key={c[0]}>{c[0]}</option>
-          ))}
-        </select>
-        <select onChange={set("shape")}>
-          {[
+        <Select
+          className="boxed"
+          showAll={false}
+          value={f.category}
+          onChange={(v) => setF({ ...f, category: v })}
+          options={CATS.map((c) => c[0])}
+        />
+        <Select
+          className="boxed"
+          showAll={false}
+          value={f.shape}
+          onChange={(v) => setF({ ...f, shape: v })}
+          options={[
             "sphere",
             "box",
             "torus",
@@ -67,10 +74,8 @@ export default function Dashboard() {
             "diamond",
             "capsule",
             "helix",
-          ].map((c) => (
-            <option key={c}>{c}</option>
-          ))}
-        </select>
+          ]}
+        />
         <input type="color" value={f.color} onChange={set("color")} />
         <input type="number" placeholder="Price" onChange={set("price")} />
         <button
@@ -135,24 +140,22 @@ export default function Dashboard() {
                   <td>{u.name}</td>
                   <td>{u.email}</td>
                   <td>
-                    <select
+                    <Select
+                      className="boxed"
+                      showAll={false}
                       value={u.role}
-                      onChange={(e) => patch(u.id, { role: e.target.value })}
-                    >
-                      {["user", "developer", "admin"].map((r) => (
-                        <option key={r}>{r}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => patch(u.id, { role: v })}
+                      options={["user", "developer", "admin"]}
+                    />
                   </td>
                   <td>
-                    <select
+                    <Select
+                      className="boxed"
+                      showAll={false}
                       value={u.plan}
-                      onChange={(e) => patch(u.id, { plan: e.target.value })}
-                    >
-                      {["free", "paid"].map((r) => (
-                        <option key={r}>{r}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => patch(u.id, { plan: v })}
+                      options={["free", "paid"]}
+                    />
                   </td>
                 </tr>
               ))}
