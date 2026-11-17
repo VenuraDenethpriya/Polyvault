@@ -22,7 +22,13 @@ const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY),
 app = express();
 
 app.use(
-  cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }),
+  // CLIENT_URL may list several origins, comma-separated
+  cors({
+    origin: (process.env.CLIENT_URL || "http://localhost:5173")
+      .split(",")
+      .map((s) => s.trim().replace(/\/$/, ""))
+      .filter(Boolean),
+  }),
   express.json(),
 );
 
