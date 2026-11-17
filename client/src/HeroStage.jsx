@@ -23,7 +23,7 @@ function Rig({ prog, wide }) {
       h = THREE.MathUtils.lerp(12.5, 3.6, e);
     p.current.set(T.x + Math.sin(th) * r + pointer.x * 1.2, h + pointer.y * 0.7, T.z + Math.cos(th) * r);
     camera.position.lerp(p.current, 0.12);
-    look.current.set(T.x, THREE.MathUtils.lerp(1.6, 2.6, e), T.z);
+    look.current.set(T.x, THREE.MathUtils.lerp(3.9, 2.6, e), T.z);
     camera.lookAt(look.current);
     // early on the stage sits beside the headline (right on desktop, lower on phones);
     // it glides to the centre as the copy fades out
@@ -56,7 +56,7 @@ export default function HeroStage({ prog, active = true }) {
       <color attach="background" args={["#07070d"]} />
       <fogExp2 attach="fog" args={["#07070d", 0.014]} />
       <Suspense fallback={null}>
-        <AssemblingStage prog={prog} cell={wide ? 1.7 : 2.2} dust={wide ? 160 : 70} confetti />
+        <AssemblingStage prog={prog} cell={wide ? 1.7 : 2.2} dust={wide ? 160 : 70} confetti vortex />
       </Suspense>
       <Rig prog={prog} wide={wide} />
       <EffectComposer multisampling={0} disableNormalPass>

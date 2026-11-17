@@ -205,6 +205,62 @@ function Grid({ color, state }) {
   );
 }
 
+// ---------------------------------------------------------------- opening vortex
+// The hero opens with every block orbiting a glowing core inside tilted energy rings; scrolling
+// pulls the blocks out of it into the stage while the rings and core fade away.
+const VC = new THREE.Vector3(CX, 4.2, 0),
+  TILT = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.62, 0, -0.28)),
+  V = new THREE.Vector3();
+function Core({ color, accent, state }) {
+  const g = useRef(),
+    orb = useRef(),
+    light = useRef(),
+    mats = useMemo(
+      () =>
+        [color, accent, "#ffffff"].map(
+          (c, i) => new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(i === 2 ? 1.2 : 2.6), transparent: true, toneMapped: false, depthWrite: false }),
+        ),
+      [color, accent],
+    ),
+    orbMat = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color(color).lerp(new THREE.Color("#ffffff"), 0.25).multiplyScalar(2.6), toneMapped: false, transparent: true }), [color]);
+  useEffect(() => () => [...mats, orbMat].forEach((m) => m.dispose()), [mats, orbMat]);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime,
+      a = state.pre ?? 1;
+    g.current.visible = a > 0.01;
+    if (!g.current.visible) return;
+    const [r1, r2, r3] = g.current.children;
+    r1.rotation.z = t * 0.35;
+    r2.rotation.z = -t * 0.22;
+    r3.rotation.y = t * 0.5;
+    mats[0].opacity = a;
+    mats[1].opacity = a * 0.8;
+    mats[2].opacity = a * 0.5;
+    orbMat.opacity = a;
+    const pulse = 1 + Math.sin(t * 2.4) * 0.12;
+    orb.current.scale.setScalar(pulse * (0.4 + 0.6 * a));
+    light.current.intensity = 60 * a * pulse;
+    g.current.scale.setScalar(0.6 + 0.4 * a);
+  });
+  return (
+    <group ref={g} position={VC} quaternion={TILT}>
+      <mesh material={mats[0]} rotation-x={Math.PI / 2}>
+        <torusGeometry args={[7.6, 0.035, 8, 220]} />
+      </mesh>
+      <mesh material={mats[1]} rotation-x={Math.PI / 2 + 0.25}>
+        <torusGeometry args={[6.4, 0.025, 8, 200]} />
+      </mesh>
+      <mesh material={mats[2]} rotation-x={0.6}>
+        <torusGeometry args={[3.2, 0.02, 8, 160]} />
+      </mesh>
+      <mesh ref={orb} material={orbMat}>
+        <icosahedronGeometry args={[0.9, 3]} />
+      </mesh>
+      <pointLight ref={light} color={color} distance={16} decay={2} />
+    </group>
+  );
+}
+
 // ---------------------------------------------------------------- the assembling stage
 export function AssemblingStage({
   url = "/stages/conference.glb",
@@ -216,6 +272,7 @@ export function AssemblingStage({
   dust = 120,
   confetti = false,
   speed = 5,
+  vortex = false,
 }) {
   const { scene } = useGLTF(url),
     data = useMemo(() => slice(scene, cell), [scene, cell]),
@@ -290,6 +347,12 @@ export function AssemblingStage({
           dur: 0.2 + r(9) * 0.1,
           ph: r(10) * 6.28,
           q: -1,
+          // vortex orbit (hero opening): inner blocks orbit faster, the disc thins out towards the rim
+          R: 2.4 + Math.pow(r(11), 0.8) * 5.4,
+          a0: r(12) * Math.PI * 2,
+          vy: (r(13) - 0.5) * 2.6 * (1 - r(11) * 0.6),
+          spin: new THREE.Vector3(r(14) - 0.5, r(15) - 0.5, r(16) - 0.5).multiplyScalar(2.2),
+          out,
         };
       }),
     [data, M, screenMats],
@@ -330,22 +393,35 @@ export function AssemblingStage({
     // ease towards the target so wheel steps turn into one smooth, continuous motion
     prog.v += (prog.target - prog.v) * (1 - Math.exp(-Math.min(dt, 0.1) * speed));
     if (Math.abs(prog.target - prog.v) < 1e-4) prog.v = prog.target;
-    const P = prog.v;
+    const P = prog.v,
+      pre = vortex ? 1 - smooth(0, 0.35, P) : 0; // how much of the opening vortex is still showing
     st.grid = smooth(0, 0.18, P);
+    st.pre = pre;
 
     pieces.forEach((p) => {
       const q = clamp01((P - p.d) / p.dur);
       if (q === 1 && p.q === 1) return; // landed and settled: nothing to update
       const e = easeOut(q),
         w = (1 - e) * 0.35,
-        m = p.mesh;
-      m.position.lerpVectors(p.from, p.c, e);
-      m.position.y += Math.sin(t * 1.3 + p.ph) * w;
-      m.rotation.set(p.rot.x * (1 - e) + Math.sin(t + p.ph) * w * 0.3, p.rot.y * (1 - e), p.rot.z * (1 - e));
-      m.scale.setScalar(0.55 + 0.45 * e);
+        m = p.mesh,
+        k = 1 - e;
+      if (vortex) {
+        // start from its slot in the swirling vortex, then swoop out and around into place
+        const a = p.a0 + t * (1.5 / p.R);
+        V.set(Math.cos(a) * p.R, p.vy + Math.sin(t * 0.9 + p.ph) * 0.15, Math.sin(a) * p.R).applyQuaternion(TILT).add(VC);
+        m.position.lerpVectors(V, p.c, e).addScaledVector(p.out, Math.sin(Math.PI * e) * 3.5);
+        m.position.y += Math.sin(Math.PI * e) * 2;
+        m.rotation.set((p.rot.x + t * p.spin.x) * k, (p.rot.y + t * p.spin.y) * k, (p.rot.z + t * p.spin.z) * k);
+        m.scale.setScalar(0.4 + 0.6 * e);
+      } else {
+        m.position.lerpVectors(p.from, p.c, e);
+        m.position.y += Math.sin(t * 1.3 + p.ph) * w;
+        m.rotation.set(p.rot.x * k + Math.sin(t + p.ph) * w * 0.3, p.rot.y * k, p.rot.z * k);
+        m.scale.setScalar(0.55 + 0.45 * e);
+      }
       if (!p.scr) {
-        // energy glow while travelling, gone the moment the block locks in
-        const g = q < 1 ? 0.2 * (1 - q) + 0.75 * Math.sin(Math.PI * q) : 0;
+        // energy glow while travelling (and a shimmer in the vortex), gone once the block locks in
+        const g = q < 1 ? (vortex ? 0.32 + 0.28 * Math.sin(t * 2.2 + p.ph) : 0.2) * (1 - q) + 0.75 * Math.sin(Math.PI * q) : 0;
         p.mat.emissive.copy(glow).multiplyScalar(g);
       }
       p.q = q;
@@ -356,7 +432,7 @@ export function AssemblingStage({
       flick = L > 0 && L < 1 ? (Math.sin(t * 47) > -0.2 ? 1 : 0.25) : 1;
     Object.values(screenMats).forEach((m) => {
       m.uniforms.uTime.value = t;
-      m.uniforms.uBright.value = 0.06 + L * flick * 0.94;
+      m.uniforms.uBright.value = 0.06 + pre * 0.5 + L * flick * 0.94;
     });
     neon.visible = L > 0.01;
     neonMat.color.copy(tmp.set(theme.neon)).multiplyScalar(1.8 * L * flick);
@@ -408,6 +484,7 @@ export function AssemblingStage({
         <Beams cfg={beamCfg} />
       </group>
       <Grid color={theme.neon} state={st} />
+      {vortex && <Core color={theme.neon} accent={theme.pillar} state={st} />}
       {dust > 0 && <Dust count={dust} color={theme.beam} />}
       {confetti && <Confetti burst={burst} cfg={theme} />}
     </>
