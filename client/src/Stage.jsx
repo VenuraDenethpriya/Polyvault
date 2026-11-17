@@ -19,7 +19,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 export const stageUrl = (a) => `/stages/${a.shape.slice(6)}.glb`;
 
 // stage centre (model units are metres, front of the stage faces +z)
-const CX = -0.8;
+export const CX = -0.8;
 
 export const THEMES = [
   { name: "Electric", screenA: "#0b3cff", screenB: "#00c8ff", pillar: "#c13bff", neon: "#19e3ff", finish: "#2b2e38", beam: "#9fdcff" },
@@ -40,10 +40,10 @@ export const VIEWS = {
 };
 
 // ---------------------------------------------------------------- LED screens
-const SCREEN_VERT = /* glsl */ `
+export const SCREEN_VERT = /* glsl */ `
 varying vec2 vUv;
 void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-const SCREEN_FRAG = /* glsl */ `
+export const SCREEN_FRAG = /* glsl */ `
 uniform float uTime, uBright, uAspect, uKind, uDir;
 uniform vec3 uA, uB, uC;
 uniform sampler2D uText;
@@ -97,7 +97,7 @@ void main(){
   #include <colorspace_fragment>
 }`;
 
-function textTexture(title, sub) {
+export function textTexture(title, sub) {
   const c = document.createElement("canvas");
   c.width = 2048;
   c.height = 768;
@@ -161,7 +161,7 @@ const BEAMS = [
   { p: [4.9, 1.4, -1], aim: [8, 12, -2], sx: 3, sz: 3, up: 1 },
 ];
 
-function Beams({ cfg }) {
+export function Beams({ cfg }) {
   const refs = useRef([]),
     mats = useMemo(
       () =>
@@ -244,7 +244,7 @@ void main(){
   float a = 1.0 - smoothstep(0.0, 0.5, d);
   gl_FragColor = vec4(uColor * a * a * (0.35 + 0.65 * vTw), 1.0);
 }`;
-function Dust({ count, color }) {
+export function Dust({ count, color }) {
   const geo = useMemo(() => {
       const g = new THREE.BufferGeometry(),
         p = new Float32Array(count * 3),
@@ -280,7 +280,7 @@ function Dust({ count, color }) {
 }
 
 // ---------------------------------------------------------------- confetti
-function Confetti({ burst, cfg }) {
+export function Confetti({ burst, cfg }) {
   const n = 450,
     ref = useRef(),
     st = useRef(null),
@@ -517,7 +517,7 @@ function Loader() {
 // soft studio reflections, applied only to the chrome truss. A scene-wide environment made
 // the big glossy floor return NaN for some view directions, and the bloom pass then spread
 // that over the whole frame.
-function useRoomEnv(mats) {
+export function useRoomEnv(mats) {
   const gl = useThree((s) => s.gl);
   useEffect(() => {
     const pm = new THREE.PMREMGenerator(gl),
@@ -535,7 +535,7 @@ function useRoomEnv(mats) {
 }
 
 // warm key light from the front truss onto the presenters
-function KeySpot({ x }) {
+export function KeySpot({ x }) {
   const l = useRef();
   useEffect(() => {
     l.current.target.position.set(x * 0.7, 1, -0.6);
@@ -547,7 +547,7 @@ function KeySpot({ x }) {
 // panel seating: white lounge chairs with side tables (the original scene's people/chairs
 // were render proxies that never made it into the GLB, so we build simple ones here)
 const SEATS = [-2.8, -1.3, 0.15, 1.65];
-function Seating() {
+export function Seating() {
   const white = useMemo(() => new THREE.MeshStandardMaterial({ color: "#f1f1f5", roughness: 0.25, metalness: 0.1 }), []),
     dark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2a2b33", roughness: 0.4, metalness: 0.6 }), []),
     glass = useMemo(() => new THREE.MeshStandardMaterial({ color: "#bfe9ff", roughness: 0.05, transparent: true, opacity: 0.55 }), []);

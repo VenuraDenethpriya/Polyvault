@@ -1,15 +1,60 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { api } from "../api.js";
-import { Hero, Viewer } from "../Scene.jsx";
+import { Viewer } from "../Scene.jsx";
 import Card from "../Card.jsx";
 import { Plans } from "./Pricing.jsx";
-import { CATS } from "../meta.js";
+import { CATS, isStage } from "../meta.js";
 import Select from "../Select.jsx";
 
 gsap.registerPlugin(ScrollTrigger);
+// the hero's 3D stage (and its three.js/postprocessing code) loads in its own chunk
+const HeroStage = lazy(() => import("../HeroStage.jsx"));
+const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Scroll-driven hero: the section is several screens tall and its content is sticky, so scrolling
+// through it drives the stage assembly (0 -> 1) instead of moving the page.
+function useHeroScroll(ref, prog) {
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    const el = ref.current,
+      pct = el.querySelector(".hero-pct");
+    if (still()) {
+      prog.target = prog.v = 1;
+      el.style.setProperty("--hp", 1);
+      el.classList.add("done");
+      return;
+    }
+    let raf = 0;
+    const upd = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect(),
+        p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - innerHeight)));
+      prog.target = p;
+      el.style.setProperty("--hp", p.toFixed(4));
+      el.classList.toggle("done", p > 0.86);
+      el.classList.toggle("moved", p > 0.01);
+      el.classList.toggle("gone", p > 0.2);
+      if (pct) pct.textContent = Math.round(Math.min(1, p / 0.82) * 100) + "%";
+    };
+    const f = () => raf || (raf = requestAnimationFrame(upd));
+    upd();
+    addEventListener("scroll", f, { passive: true });
+    addEventListener("resize", f);
+    // stop rendering the 3D scene once the hero is scrolled away
+    const o = new IntersectionObserver(([e]) => setOn(e.isIntersecting));
+    o.observe(el);
+    return () => {
+      removeEventListener("scroll", f);
+      removeEventListener("resize", f);
+      cancelAnimationFrame(raf);
+      o.disconnect();
+    };
+  }, [ref, prog]);
+  return on;
+}
 function Count({ to, suf = "" }) {
   const r = useRef();
   useEffect(() => {
@@ -79,7 +124,10 @@ export default function Home() {
     [q, setQ] = useState(""),
     [cat, setCat] = useState(""),
     [f, setF] = useState(0),
-    rail = useRef();
+    rail = useRef(),
+    hero = useRef(),
+    prog = useRef({ target: 0, v: 0 }).current,
+    live = useHeroScroll(hero, prog);
   useEffect(() => {
     api("/assets").then(setItems);
   }, []);
@@ -91,17 +139,6 @@ export default function Home() {
         stagger: 0.12,
         duration: 0.9,
         ease: "power3.out",
-      });
-      gsap.to(".txt", {
-        opacity: 0,
-        y: -80,
-        ease: "none",
-        scrollTrigger: {
-          trigger: ".hero",
-          start: "top top",
-          end: "bottom 35%",
-          scrub: true,
-        },
       });
       gsap.utils
         .toArray(".reveal")
@@ -122,6 +159,7 @@ export default function Home() {
   }, [items.length]);
   const hot = [...items].sort((a, b) => b.downloads - a.downloads).slice(0, 10),
     fresh = [...items].sort((a, b) => b.id - a.id).slice(0, 8),
+    stage = items.find(isStage),
     go = (e) => {
       e.preventDefault();
       nav(
@@ -130,44 +168,68 @@ export default function Home() {
     };
   return (
     <>
-      <header className="hero">
-        <div className="bg">
-          <Hero />
-        </div>
-        <div className="shade" />
-        <div className="wrap txt">
-          <span className="badge anim">✦ New · Unlimited 3D downloads</span>
-          <h1 className="anim">
-            Create <em>without</em> limits.
-            <br />
-            Download the <em>future</em>.
-          </h1>
-          <p className="anim">
-            Premium 3D models, textures, icons and graphics. Preview in real
-            time, then download in the quality your plan unlocks.
-          </p>
-          <form className="search anim" onSubmit={go}>
-            {/* <select value={cat} onChange={(e) => setCat(e.target.value)}>
-              <option value="">All</option>
-              {CATS.map((c) => (
-                <option key={c[0]}>{c[0]}</option>
+      <header className="hero hero-x" ref={hero}>
+        <div className="hero-pin">
+          <div className="bg">
+            <Suspense fallback={null}>
+              <HeroStage prog={prog} active={live} />
+            </Suspense>
+          </div>
+          <div className="shade" />
+          <div className="wrap txt">
+            <span className="badge anim">✦ New · Unlimited 3D downloads</span>
+            <h1 className="anim">
+              Create <em>without</em> limits.
+              <br />
+              Download the <em>future</em>.
+            </h1>
+            <p className="anim">
+              Premium 3D models, textures, icons and graphics. Preview in real
+              time, then download in the quality your plan unlocks.
+            </p>
+            <form className="search anim" onSubmit={go}>
+              {/* <select value={cat} onChange={(e) => setCat(e.target.value)}>
+                <option value="">All</option>
+                {CATS.map((c) => (
+                  <option key={c[0]}>{c[0]}</option>
+                ))}
+              </select> */}
+              <Select value={cat} onChange={setCat} options={CATS.map((c) => c[0])} />
+              <input
+                placeholder="Search 3D assets…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              <button className="btn">Search</button>
+            </form>
+            <div className="pop anim">
+              Popular:{" "}
+              {["orb", "knot", "torus", "glass", "neon"].map((t) => (
+                <Link key={t} to={"/browse?q=" + t}>
+                  {t}
+                </Link>
               ))}
-            </select> */}
-            <Select value={cat} onChange={setCat} options={CATS.map((c) => c[0])} />
-            <input
-              placeholder="Search 3D assets…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <button className="btn">Search</button>
-          </form>
-          <div className="pop anim">
-            Popular:{" "}
-            {["orb", "knot", "torus", "glass", "neon"].map((t) => (
-              <Link key={t} to={"/browse?q=" + t}>
-                {t}
+            </div>
+          </div>
+          <div className="wrap hero-end">
+            <span className="badge">✦ New category · Stages</span>
+            <h2>
+              Built live, <em>block by block</em>.
+            </h2>
+            <p>Every stage in Polyvault runs in real time. Orbit it in 360°, recolour the LED screens and neon, and set the lights going.</p>
+            <div className="row">
+              <Link className="btn big" to={stage ? "/asset/" + stage.id : "/browse?category=Stages"}>
+                Open the 360° studio →
               </Link>
-            ))}
+              <Link className="btn ghost big" to="/browse?category=Stages">
+                Browse stages
+              </Link>
+            </div>
+          </div>
+          <div className="hero-cue">
+            <i />
+            <span>Scroll to build the stage</span>
+            <b className="hero-pct">0%</b>
           </div>
         </div>
       </header>
