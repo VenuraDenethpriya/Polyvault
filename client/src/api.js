@@ -15,15 +15,20 @@ export const api = async (p, o = {}) => {
   return d;
 };
 
+// file extension from the response type (stages download JPG / GLB, everything else SVG)
+const EXT = { "image/jpeg": "jpg", "model/gltf-binary": "glb" };
+
 export const download = async (a, q) => {
   const t = localStorage.t;
   const r = await fetch(`${API_URL}/assets/${a.id}/download?quality=${q}`, {
     headers: t ? { Authorization: "Bearer " + t } : {},
   });
   if (!r.ok) throw new Error((await r.json()).error);
-  const u = URL.createObjectURL(await r.blob());
+  const b = await r.blob(),
+    u = URL.createObjectURL(b);
   Object.assign(document.createElement("a"), {
     href: u,
-    download: `${a.title}-${q}.svg`,
+    download: `${a.title}-${q}.${EXT[b.type.split(";")[0]] || "svg"}`,
   }).click();
+  setTimeout(() => URL.revokeObjectURL(u), 1000);
 };

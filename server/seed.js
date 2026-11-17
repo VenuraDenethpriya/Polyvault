@@ -55,6 +55,11 @@ const M = SH.flatMap((s, si) =>
     ];
   }),
 );
+// Stages: full 3D event stages with a 360° studio viewer. Inserted on startup if missing
+// (not only on an empty DB), so existing databases pick up new stages too.
+export const STAGES = [
+  ["Business Conference Stage", "Stages", "stage:conference", "#19e3ff", 49, 860],
+];
 export const ASSETS = [];
 for (let i = 0; i < Math.max(M.length, STOCK.length); i++) {
   if (M[i]) ASSETS.push(M[i]);

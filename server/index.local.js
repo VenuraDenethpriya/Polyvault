@@ -1,5 +1,5 @@
-import { stockSvg, VALID } from "./stock.js";
-import { ASSETS } from "./seed.js";
+import { stockSvg, stageFile, VALID } from "./stock.js";
+import { ASSETS, STAGES } from "./seed.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -41,6 +41,13 @@ let db = fs.existsSync(F)
       })),
     };
 db.purchases ||= [];
+// add any stage missing from an existing db.json
+for (const [title, category, shape, color, price, downloads] of STAGES)
+  if (!db.assets.some((a) => a.shape === shape))
+    db.assets.push({
+      ...A(Math.max(0, ...db.assets.map((a) => a.id)) + 1, title, category, shape, color, price),
+      downloads,
+    });
 const save = () => fs.writeFileSync(F, JSON.stringify(db, null, 1));
 save();
 const owns = (u, assetId) =>
@@ -194,6 +201,8 @@ app.get("/api/assets/:id/download", (req, res) => {
     });
   a.downloads++;
   save();
+  const f = stageFile(a, q);
+  if (f) return res.type(f.type).sendFile(f.path);
   const s = SIZE[q];
   res
     .type("image/svg+xml")

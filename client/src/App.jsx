@@ -78,6 +78,9 @@ function Nav() {
               {c[0]}
             </Link>
           ))}
+          <Link to="/browse?category=Stages" className="new-link">
+            Stages <sup>NEW</sup>
+          </Link>
           <Link to="/pricing">Pricing</Link>
         </div>
         <div className="sp" />

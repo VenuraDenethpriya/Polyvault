@@ -8,7 +8,7 @@ export default function Browse() {
   const [sp, setSp] = useSearchParams(),
     [all, setAll] = useState([]),
     [sort, setSort] = useState("popular"),
-    [max, setMax] = useState(30),
+    [max, setMax] = useState(60),
     [kind, setKind] = useState(""),
     q = sp.get("q") || "",
     cat = sp.get("category") || "";
@@ -74,7 +74,7 @@ export default function Browse() {
         <input
           type="range"
           min="5"
-          max="30"
+          max="60"
           value={max}
           onChange={(e) => setMax(+e.target.value)}
         />

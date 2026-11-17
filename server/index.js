@@ -1,5 +1,5 @@
-import { stockSvg, VALID } from "./stock.js";
-import { ASSETS } from "./seed.js";
+import { stockSvg, stageFile, VALID } from "./stock.js";
+import { ASSETS, STAGES } from "./seed.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -75,6 +75,19 @@ if (!(await ok(sb.from("assets").select("id").limit(1))).length) {
     ),
   );
 }
+
+// Make sure every stage exists, even in a database that was seeded before Stages existed
+for (const [title, category, shape, color, price, downloads] of STAGES)
+  if (!(await ok(sb.from("assets").select("id").eq("shape", shape).limit(1))).length) {
+    const owner = (
+      await ok(sb.from("users").select("id").eq("role", "developer").limit(1))
+    )[0]?.id;
+    await ok(
+      sb
+        .from("assets")
+        .insert({ title, category, shape, color, price, downloads, owner }),
+    );
+  }
 
 // Helper functions
 const pub = ({ hash, ...u }) => u,
@@ -291,13 +304,11 @@ const owns = async (u, assetId) => {
         .maybeSingle(),
     ));
   } catch (e) {
-    // e.g. purchases table not created yet: don't break downloads
     console.warn("purchases lookup failed:", e.message);
     return false;
   }
 };
 
-// Friendlier error when the purchases table hasn't been created yet
 const noTable = (e) =>
   /purchases/.test(e.message) && /schema cache|does not exist/.test(e.message);
 const SETUP_MSG =
@@ -383,6 +394,8 @@ app.get(
         .update({ downloads: a.downloads + 1 })
         .eq("id", a.id),
     );
+    const f = stageFile(a, q);
+    if (f) return res.type(f.type).sendFile(f.path);
     const s = SIZE[q];
     res
       .type("image/svg+xml")

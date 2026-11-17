@@ -193,11 +193,16 @@ export default function Home() {
               className={"tile t" + i}
               style={{ "--c": c }}
             >
-              <div className="thumb">
-                <i className="fl">
-                  <b className={"shape " + s} />
-                </i>
-              </div>
+              {s === "stage" ? (
+                <img className="tile-stage" src="/stages/conference-1.jpg" alt="" loading="lazy" />
+              ) : (
+                <div className="thumb">
+                  <i className="fl">
+                    <b className={"shape " + s} />
+                  </i>
+                </div>
+              )}
+              {s === "stage" && <span className="badge">New · 360° live 3D</span>}
               <h3>{n}</h3>
               <p>{d}</p>
             </Link>

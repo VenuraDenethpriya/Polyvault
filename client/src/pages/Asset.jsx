@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, download } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import { Viewer } from "../Scene.jsx";
 import Card from "../Card.jsx";
 import Checkout from "../Checkout.jsx";
-import { meta, SIZES, isImg, imgSrc } from "../meta.js";
+import { meta, SIZES, isImg, imgSrc, isStage, stageImg, STAGE_Q } from "../meta.js";
+// the stage studio (postprocessing, reflector, fat lines) only loads for stage assets
+const StageStudio = lazy(() => import("../Stage.jsx"));
 const SW = ["#7c5cff", "#00d4ff", "#ff4fd8", "#ffb84d", "#3ddc97", "#ffffff"];
 export default function Asset() {
   const { id } = useParams(),
@@ -37,6 +39,7 @@ export default function Asset() {
       </div>
     );
   const m = meta(a),
+    stage = isStage(a),
     pro = !!user && (user.plan === "paid" || user.role === "admin"),
     mine = owned.includes(a.id),
     tier = !user ? 0 : pro || mine ? 2 : 1,
@@ -59,9 +62,23 @@ export default function Asset() {
         </Link>{" "}
         / {a.title}
       </div>
+      {stage && (
+        <>
+          <div className="stage-intro">
+            <div>
+              <span className="badge">New · 360° stage studio</span>
+              <h1>{a.title}</h1>
+              <p>Orbit all the way round, pick a theme, retitle the LED wall and run a light show.</p>
+            </div>
+          </div>
+          <Suspense fallback={<div className="stage-studio" />}>
+            <StageStudio a={a} />
+          </Suspense>
+        </>
+      )}
       <div className="detail">
         <div>
-          {isImg(a) ? (
+          {stage ? null : isImg(a) ? (
             <div className="viewer imgv">
               <img
                 src={imgSrc(a)}
@@ -131,7 +148,7 @@ export default function Asset() {
               <small>Drag to rotate · scroll to zoom</small>
             </div>
           )}
-          <div className="tabs">
+          <div className="tabs" style={stage ? { marginTop: 0 } : undefined}>
             {[
               ["desc", "Description"],
               ["det", "Details"],
@@ -149,6 +166,15 @@ export default function Asset() {
           {tab === "desc" && (
             <div className="tabc">
               <p>{m.desc}</p>
+              {stage && (
+                <div className="st-gallery">
+                  {[1, 2, 3].map((n) => (
+                    <a key={n} href={stageImg(a, n)} target="_blank" rel="noreferrer">
+                      <img loading="lazy" src={stageImg(a, n)} alt={`${a.title} render ${n}`} />
+                    </a>
+                  ))}
+                </div>
+              )}
               <div className="chips">
                 {m.tags.map((t) => (
                   <Link key={t} to={"/browse?q=" + t}>
@@ -162,7 +188,15 @@ export default function Asset() {
             <table className="tabc">
               <tbody>
                 {[
-                  ...(isImg(a)
+                  ...(stage
+                    ? [
+                        ["Format", "GLB (glTF 2.0) · web + full precision"],
+                        ["Polygons", m.polys + " tris"],
+                        ["Scale", "Real-world metres · 14 × 6.5 m stage, 1 m deck"],
+                        ["Screens", "8 × 3 m LED wall, 2 pillars, 6 chevrons (UV-mapped)"],
+                        ["Rigging", "10 × 9 m truss at 7.2 m with moving heads"],
+                      ]
+                    : isImg(a)
                     ? [
                         ["Format", "SVG vector (scales to any size)"],
                         ["Aspect ratio", "3:2 landscape"],
@@ -228,7 +262,9 @@ export default function Asset() {
               </button>
               <p className="hint">
                 {user
-                  ? "One-time purchase. Unlocks 4096px + commercial licence for this asset."
+                  ? stage
+                    ? "One-time purchase. Unlocks the full-precision GLB + commercial licence."
+                    : "One-time purchase. Unlocks 4096px + commercial licence for this asset."
                   : "Log in to buy this asset."}
               </p>
             </>
@@ -240,8 +276,8 @@ export default function Asset() {
               onClick={() => go(q)}
             >
               <span>{i > tier ? "🔒" : "⬇"}</span>
-              <b>{q[0].toUpperCase() + q.slice(1)} quality</b>
-              <em>{SIZES[q]}px</em>
+              <b>{stage ? STAGE_Q[q][0] : q[0].toUpperCase() + q.slice(1) + " quality"}</b>
+              <em>{stage ? STAGE_Q[q][1] : SIZES[q] + "px"}</em>
               <small>
                 {i > tier ? (i === 1 ? "Log in" : "Buy or go Pro") : "Ready"}
               </small>

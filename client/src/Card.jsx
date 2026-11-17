@@ -1,9 +1,14 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "./auth.jsx";
-import { meta, isImg, imgSrc } from "./meta.js";
+import { meta, isImg, imgSrc, isStage, stageImg } from "./meta.js";
 export const Thumb = ({ a }) =>
-  isImg(a) ? (
+  isStage(a) ? (
+    <div className="thumb img">
+      <img loading="lazy" src={stageImg(a)} alt={a.title} style={{ objectPosition: "50% 56%" }} />
+      <span className="st-badge">360° · LIVE 3D</span>
+    </div>
+  ) : isImg(a) ? (
     <div className="thumb img">
       <img loading="lazy" src={imgSrc(a)} alt={a.title} />
     </div>
