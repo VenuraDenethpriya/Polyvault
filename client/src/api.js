@@ -10,7 +10,18 @@ export const api = async (p, o = {}) => {
     },
     body: o.body && JSON.stringify(o.body),
   });
-  const d = await r.json();
+  // a server that doesn't know the route answers with an HTML page, not JSON
+  const txt = await r.text();
+  let d;
+  try {
+    d = txt ? JSON.parse(txt) : {};
+  } catch {
+    throw new Error(
+      r.status === 404
+        ? `The API server doesn't have ${p.split("?")[0]} yet (404). Restart or redeploy the server with the latest code.`
+        : `The API server sent an unexpected response (${r.status}).`,
+    );
+  }
   if (!r.ok) throw new Error(d.error || "Error");
   return d;
 };
