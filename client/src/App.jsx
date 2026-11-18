@@ -11,6 +11,7 @@ import Account from "./pages/Account.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Cursor from "./Cursor.jsx";
 import ScrollRail from "./ScrollRail.jsx";
+import { Fx } from "./fx.jsx";
 
 function Nav() {
   const { user, logout, favs } = useAuth(),
@@ -174,6 +175,7 @@ export default () => (
   <Provider>
     <Cursor/>
     <ScrollRail/>
+    <Fx />
     <Top />
     <Nav />
     <Routes>

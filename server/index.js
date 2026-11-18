@@ -32,6 +32,7 @@ app.use(
   express.json(),
 );
 
+
 // Helper functions
 const ok = async (p) => {
   const { data, error } = await p;
@@ -409,6 +410,29 @@ app.get(
         stockSvg(a, s) ||
           `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 100 100"><defs><radialGradient id="g"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${a.color}"/></radialGradient></defs><rect width="100" height="100" fill="#0b0b14"/><circle cx="50" cy="50" r="30" fill="url(#g)"/><text x="50" y="92" fill="#fff" font-size="5" text-anchor="middle">${a.title} · ${q} · ${s}px</text></svg>`,
       );
+  }),
+);
+
+// API route for a custom-sized stage export (Pro). The resized GLB is built in the browser
+// from the stage studio; this checks the plan and counts the download first.
+app.post(
+  "/api/assets/:id/custom",
+  need(),
+  h(async (req, res) => {
+    const a = await one(req.params.id);
+    if (!a || !/^stage:/.test(a.shape))
+      return res.status(404).json({ error: "Not a stage asset" });
+    if (tierOf(req.user) !== "high")
+      return res
+        .status(403)
+        .json({ error: "Custom stage sizes are a Pro feature" });
+    await ok(
+      sb
+        .from("assets")
+        .update({ downloads: a.downloads + 1 })
+        .eq("id", a.id),
+    );
+    res.json({ ok: true });
   }),
 );
 

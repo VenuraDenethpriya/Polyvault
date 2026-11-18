@@ -9,8 +9,8 @@ export function Plans() {
     setUser(await api("/upgrade", { method: "POST" }));
   };
   return (
-    <div className="plans">
-      <div className="plan">
+    <div className="plans" data-io>
+      <div className="plan spot" style={{ "--i": 0 }}>
         <h3>Guest</h3>
         <div className="price">Free</div>
         <p>No account needed</p>
@@ -23,7 +23,7 @@ export function Plans() {
           Start browsing
         </Link>
       </div>
-      <div className="plan">
+      <div className="plan spot" style={{ "--i": 1 }}>
         <h3>Member</h3>
         <div className="price">Free</div>
         <p>Create a free account</p>
@@ -40,7 +40,7 @@ export function Plans() {
           </Link>
         )}
       </div>
-      <div className="plan hot">
+      <div className="plan hot spot" style={{ "--i": 2 }}>
         <span className="badge">Most popular</span>
         <h3>Pro</h3>
         <div className="price">
