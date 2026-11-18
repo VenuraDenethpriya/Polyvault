@@ -6560,3 +6560,258 @@ body.menu-open {
       "top";
   }
 }
+
+/* ---------- stage studio: Pro dimensions + custom GLB export (Stage.jsx SizePanel) */
+.st-size {
+  position: relative;
+  margin: -4px -6px 6px;
+  padding: 12px 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #7c5cff55;
+  background:
+    radial-gradient(120% 80% at 100% 0%, #7c5cff22, transparent 60%),
+    #ffffff05;
+}
+.st-size h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0 !important;
+}
+.st-pro {
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #07070d;
+  background: linear-gradient(90deg, #ffb84d, #ff7e5f);
+}
+.st-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.st-presets button {
+  padding: 6px 4px;
+  border-radius: 9px;
+  font-size: 11.5px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  transition:
+    border-color 0.25s,
+    background 0.25s;
+}
+.st-presets button:hover:not(:disabled) {
+  border-color: #7c5cff88;
+}
+.st-presets button.on {
+  background: #7c5cff33;
+  border-color: #7c5cff;
+  color: #fff;
+}
+.st-dimrow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 8px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: #cfcfe0;
+}
+.st-dimrow b {
+  font: 700 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #fff;
+}
+.st-dimrow input {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+}
+.st-dimrow input::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #7c5cff, #00d4ff) 0 0 / calc(var(--f) * 100%) 100% no-repeat, #ffffff18;
+}
+.st-dimrow input::-moz-range-track {
+  height: 4px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #7c5cff, #00d4ff) 0 0 / calc(var(--f) * 100%) 100% no-repeat, #ffffff18;
+}
+.st-dimrow input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px #7c5cff66,
+    0 0 10px #7c5cff;
+  transition: transform 0.15s;
+}
+.st-dimrow input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px #7c5cff66,
+    0 0 10px #7c5cff;
+}
+.st-dimrow input:active::-webkit-slider-thumb {
+  transform: scale(1.2);
+}
+.st-dimrow input:disabled {
+  cursor: not-allowed;
+}
+.st-sizesum {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #0007;
+  font-size: 12px;
+  color: var(--mut);
+}
+.st-sizesum span:first-child {
+  color: #fff;
+  font-weight: 600;
+}
+.st-sizeopts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+.st-sizeopts button {
+  padding: 7px 8px;
+  border-radius: 9px;
+  font-size: 12px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.st-sizeopts button:last-child {
+  grid-column: 1 / -1;
+}
+.st-sizeopts button.on {
+  border-color: #00d4ff88;
+  color: #fff;
+}
+.st-size button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.st-export {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px;
+  border: 0;
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #fff;
+  background: linear-gradient(90deg, #ffb84d, #ff7e5f, #ff4fd8);
+  box-shadow: 0 10px 26px -10px #ff7e5f;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.st-export:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -10px #ff7e5f;
+}
+.st-export.auth,
+.st-export.build {
+  background: linear-gradient(90deg, #ffb84d, #ff7e5f, #ff4fd8, #ffb84d) 0 0 / 300% 100%;
+  animation: stExp 1.2s linear infinite;
+  cursor: progress;
+}
+.st-export.done {
+  background: linear-gradient(90deg, #3ddc97, #00d4ff);
+}
+@keyframes stExp {
+  to {
+    background-position: -300% 0;
+  }
+}
+.st-exmsg {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--mut);
+}
+.st-lock {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed #ffb84d66;
+  background: #ffb84d0f;
+  text-align: center;
+}
+.st-lock b {
+  display: block;
+  font-size: 13px;
+  color: #fff;
+}
+.st-lock p {
+  margin: 6px 0 10px;
+  font-size: 12px;
+  color: var(--mut);
+}
+.st-lock .btn {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.st-size.locked .st-dimrow,
+.st-size.locked .st-presets,
+.st-size.locked .st-sizesum {
+  opacity: 0.55;
+  filter: saturate(0.4);
+}
+/* measurement labels floating in the 3D view */
+.st-dim {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+  background: #07070dcc;
+  border: 1px solid #cfe9ff55;
+  backdrop-filter: blur(4px);
+  color: #fff;
+  line-height: 1.15;
+  animation: stDim 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.3) both;
+}
+.st-dim span {
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9fc9e6;
+}
+.st-dim b {
+  font: 700 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@keyframes stDim {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+/* keep the studio controls above the 3D measurement labels */
+.stage-studio .st-panel,
+.stage-studio .st-views,
+.stage-studio .st-quick {
+  z-index: 6;
+}

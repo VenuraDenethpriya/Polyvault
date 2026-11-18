@@ -413,5 +413,28 @@ app.get(
   }),
 );
 
+// API route for a custom-sized stage export (Pro). The resized GLB is built in the browser
+// from the stage studio; this checks the plan and counts the download first.
+app.post(
+  "/api/assets/:id/custom",
+  need(),
+  h(async (req, res) => {
+    const a = await one(req.params.id);
+    if (!a || !/^stage:/.test(a.shape))
+      return res.status(404).json({ error: "Not a stage asset" });
+    if (tierOf(req.user) !== "high")
+      return res
+        .status(403)
+        .json({ error: "Custom stage sizes are a Pro feature" });
+    await ok(
+      sb
+        .from("assets")
+        .update({ downloads: a.downloads + 1 })
+        .eq("id", a.id),
+    );
+    res.json({ ok: true });
+  }),
+);
+
 // Start the server and listen on port 5001
 app.listen(5001, () => console.log("API on :5001 (Supabase)"));
